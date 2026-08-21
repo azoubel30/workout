@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HFFB Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#111110;
+  --bg2:#171614;
+  --panel:#1c1a17;
+  --panel2:#221f1b;
+  --iron:#3a3733;
+  --iron-light:#55504a;
+  --amber:#e8a23a;
+  --amber-dim:#8a6423;
+  --amber-glow:rgba(232,162,58,0.15);
+  --text:#eae6df;
+  --text-dim:#9c968b;
+  --text-faint:#635e56;
+  --red:#c45c4a;
+  --green:#7a9b6e;
+  --border:#2c2925;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;}
+body{
+  min-height:100vh;
+  background:
+    radial-gradient(ellipse at top, rgba(232,162,58,0.06), transparent 60%),
+    var(--bg);
+}
+::-webkit-scrollbar{display:none;}
+.app{max-width:520px;margin:0 auto;padding-bottom:100px;}
+
+/* HEADER */
+header{
+  padding:22px 18px 14px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg, var(--bg2), var(--bg));
+  position:sticky; top:0; z-index:20;
+}
+.brand{display:flex; align-items:baseline; justify-content:space-between;}
+.brand h1{
+  font-family:'Oswald',sans-serif; font-weight:700; letter-spacing:1px;
+  font-size:19px; text-transform:uppercase; margin:0; color:var(--text);
+}
+.brand h1 span{color:var(--amber);}
+.brand .sub{font-size:10.5px; color:var(--text-faint); letter-spacing:1.5px; text-transform:uppercase; margin-top:2px;}
+
+.week-strip{display:flex; gap:6px; margin-top:14px; overflow-x:auto; padding-bottom:2px;}
+.week-pill{
+  flex:0 0 auto; padding:7px 12px; border-radius:3px; border:1px solid var(--border);
+  background:var(--panel); color:var(--text-dim); font-family:'JetBrains Mono',monospace;
+  font-size:12px; white-space:nowrap; cursor:pointer;
+}
+.week-pill.active{border-color:var(--amber); color:var(--amber); background:var(--amber-glow);}
+.block-label{font-size:11px; color:var(--amber-dim); margin-top:10px; letter-spacing:1px; text-transform:uppercase; font-family:'Oswald',sans-serif;}
+
+/* DAY TABS */
+.day-tabs{display:flex; gap:0; margin:14px 18px 0; border:1px solid var(--border); border-radius:4px; overflow:hidden;}
+.day-tab{flex:1; text-align:center; padding:10px 4px; background:var(--panel); color:var(--text-dim); font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:0.5px; text-transform:uppercase; cursor:pointer; border-right:1px solid var(--border);}
+.day-tab:last-child{border-right:none;}
+.day-tab.active{background:var(--amber); color:#1a1408; font-weight:600;}
+.day-focus{padding:10px 18px 0; font-size:12px; color:var(--text-faint); text-align:center; letter-spacing:0.5px;}
+
+/* MAIN NAV (bottom) */
+.tabbar{
+  position:fixed; bottom:0; left:0; right:0; z-index:30;
+  background:var(--bg2); border-top:1px solid var(--border);
+  display:flex; max-width:520px; margin:0 auto;
+}
+.tab-btn{flex:1; text-align:center; padding:11px 4px 9px; background:none; border:none; color:var(--text-faint); font-family:'Oswald',sans-serif; font-size:10.5px; letter-spacing:0.8px; text-transform:uppercase; cursor:pointer;}
+.tab-btn.active{color:var(--amber);}
+.tab-btn .ic{display:block; font-size:17px; margin-bottom:2px;}
+
+/* VIEW */
+.view{padding:14px 18px 10px;}
+.hidden{display:none !important;}
+
+/* EXERCISE CARD */
+.excard{
+  background:var(--panel); border:1px solid var(--border); border-radius:6px;
+  margin-bottom:12px; overflow:hidden;
+}
+.excard.done{border-color:var(--amber-dim);}
+.exhead{padding:13px 14px 10px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+.exname{font-family:'Oswald',sans-serif; font-size:15px; font-weight:600; letter-spacing:0.2px; line-height:1.25;}
+.extag{display:inline-block; font-size:9.5px; letter-spacing:1px; padding:1px 6px; border-radius:2px; margin-right:6px; font-family:'JetBrains Mono',monospace; vertical-align:middle;}
+.extag.topset{background:rgba(232,162,58,0.18); color:var(--amber);}
+.extag.backoff{background:rgba(156,150,139,0.15); color:var(--text-dim);}
+.exmeta{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim); margin-top:4px;}
+.exmeta b{color:var(--text);}
+.exnote{font-size:11.5px; color:var(--text-faint); padding:0 14px 10px; line-height:1.4; border-bottom:1px solid var(--border);}
+.last-hint{font-size:11px; color:var(--amber-dim); padding:8px 14px 0; font-family:'JetBrains Mono',monospace;}
+
+.sets{padding:8px 14px 12px;}
+.setrow{display:grid; grid-template-columns:26px 1fr 1fr 1fr 30px; gap:8px; align-items:center; padding:6px 0;}
+.setrow .sn{font-family:'JetBrains Mono',monospace; color:var(--text-faint); font-size:12px;}
+.setrow input{
+  width:100%; background:var(--panel2); border:1px solid var(--border); border-radius:4px;
+  color:var(--text); font-family:'JetBrains Mono',monospace; font-size:14px; text-align:center;
+  padding:8px 2px; -moz-appearance:textfield;
+}
+.setrow input::-webkit-outer-spin-button, .setrow input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+.setrow input:focus{outline:none; border-color:var(--amber);}
+.setrow .chk{
+  width:26px; height:26px; border-radius:50%; border:1.5px solid var(--iron-light);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; color:transparent; font-size:14px;
+  justify-self:center;
+}
+.setrow .chk.on{background:var(--green); border-color:var(--green); color:#0d130c;}
+.col-labels{display:grid; grid-template-columns:26px 1fr 1fr 1fr 30px; gap:8px; font-size:9.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.5px; padding-bottom:2px; font-family:'Oswald',sans-serif;}
+
+.rest-row{display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-top:1px solid var(--border); background:var(--panel2);}
+.rest-btn{
+  background:none; border:1px solid var(--iron-light); color:var(--text-dim); border-radius:4px;
+  padding:6px 12px; font-family:'JetBrains Mono',monospace; font-size:12px; cursor:pointer;
+}
+.rest-btn.running{border-color:var(--amber); color:var(--amber);}
+.timer-display{font-family:'JetBrains Mono',monospace; font-size:15px; color:var(--amber); min-width:52px; text-align:right;}
+
+/* HISTORY */
+.hist-empty{text-align:center; color:var(--text-faint); padding:60px 20px; font-size:13px; line-height:1.6;}
+.hist-day{background:var(--panel); border:1px solid var(--border); border-radius:6px; margin-bottom:12px; padding:14px;}
+.hist-day-title{font-family:'Oswald',sans-serif; font-size:14px; color:var(--amber); margin-bottom:8px; display:flex; justify-content:space-between;}
+.hist-ex{font-size:12px; color:var(--text-dim); padding:4px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;}
+.hist-ex:last-child{border-bottom:none;}
+.hist-ex b{color:var(--text);}
+
+/* PROGRAM OVERVIEW */
+.ov-week{background:var(--panel); border:1px solid var(--border); border-radius:6px; margin-bottom:10px; padding:12px 14px;}
+.ov-week-title{font-family:'Oswald',sans-serif; font-size:13px; color:var(--amber); margin-bottom:6px;}
+.ov-day{font-size:11.5px; color:var(--text-dim); padding:3px 0;}
+.ov-day b{color:var(--text-faint); font-family:'JetBrains Mono',monospace; margin-right:6px;}
+
+/* TOAST */
+.toast{
+  position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--amber); color:#1a1408; padding:9px 18px; border-radius:20px;
+  font-family:'Oswald',sans-serif; font-size:12.5px; font-weight:600; letter-spacing:0.3px;
+  opacity:0; transition:all 0.25s ease; z-index:50; pointer-events:none;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+.save-bar{padding:6px 18px 0;}
+.save-btn{
+  width:100%; padding:13px; background:var(--amber); color:#1a1408; border:none; border-radius:6px;
+  font-family:'Oswald',sans-serif; font-size:13px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+  cursor:pointer; margin-top:6px;
+}
+.save-btn:active{opacity:0.85;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <h1>HFFB <span>Tracker</span></h1>
+    </div>
+    <div class="sub">Jeff Nippard · High Frequency Full Body · 4x/Week</div>
+    <div class="block-label" id="blockLabel"></div>
+    <div class="week-strip" id="weekStrip"></div>
+  </header>
+
+  <div id="workoutTabs">
+    <div class="day-tabs" id="dayTabs"></div>
+    <div class="day-focus" id="dayFocus"></div>
+  </div>
+
+  <div class="view" id="todayView"></div>
+  <div class="view hidden" id="historyView"></div>
+  <div class="view hidden" id="programView"></div>
+</div>
+
+<div class="tabbar">
+  <button class="tab-btn active" data-tab="today"><span class="ic">&#9679;</span>Today</button>
+  <button class="tab-btn" data-tab="program"><span class="ic">&#9776;</span>Program</button>
+  <button class="tab-btn" data-tab="history"><span class="ic">&#9201;</span>History</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>const PROGRAM_DATA = {"dayNames": {"1": "Lower Focused Full Body", "2": "Chest Focused Full Body", "3": "Back Focused Full Body", "4": "Lower Focused Full Body II"}, "weeks": [{"n": 1, "block": "Block 1 · Week 1", "days": [[{"name": "Back Squat", "warm": 3, "sets": 4, "reps": 4, "intensity": "77.5%", "rest": "2-4 min", "note": "Sit back and down, 15° toe flare, drive your knees out laterally"}, {"name": "Dumbbell Incline Press", "warm": 2, "sets": 3, "reps": 8, "intensity": "RPE 8", "rest": "2-3 min", "note": "~45° incline, mind-muscle connection with upper pecs"}, {"name": "Lying Leg Curl", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 6", "rest": "1-2 min", "note": "Focus on squeezing your hamstrings to move the weight"}, {"name": "Pronated Pulldown", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 7", "rest": "2-3 min", "note": "Pull your elbows down and in"}, {"name": "Seated Hip Abduction", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on driving your knees out"}, {"name": "Supinated EZ Bar Curl", "warm": 1, "sets": 3, "reps": "15/15", "intensity": "RPE 9", "rest": "1-2 min", "note": "Dropset weeks: drop weight ~50% on the second half of reps"}, {"name": "Standing Calf Raise", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 7", "rest": "1-2 min", "note": "1-2 second pause at the bottom of each rep"}], [{"name": "Barbell Bench Press", "warm": 3, "sets": 3, "reps": 3, "intensity": "85%", "rest": "2-4 min", "note": "Comfortable arch, 1-2 sec pause on chest, explode off chest"}, {"name": "Low to High Cable Flye", "warm": 0, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "Hands out to sides, palms up â€“ pull elbows up & in while rotating palms to face floor"}, {"name": "Barbell Hip Thrust or RDL", "warm": 2, "sets": 4, "reps": 12, "intensity": "RPE 6", "rest": "2-3 min", "note": "Hip thrust if glutes are priority, RDL if hamstrings are priority. Mind-muscle focus."}, {"name": "Chest-Supported T-Bar Row", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 6", "rest": "1-3 min", "note": "Squeeze shoulder blades together at top, let them round forward at bottom"}, {"name": "Arnold Press", "warm": 0, "sets": 3, "reps": 10, "intensity": "RPE 7", "rest": "1-3 min", "note": "Elbows in front, palms in â€“ rotate palms to face forward as you press"}, {"name": "Tricep Pressdown", "warm": 0, "sets": 3, "reps": 15, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on squeezing triceps to move the weight"}, {"name": "Hex Bar or Smith Machine Shrug", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 6", "rest": "1-2 min", "note": "Shrug up and in, pull shoulders up to ears"}], [{"name": "Weighted Pull-Up", "warm": 2, "sets": 3, "reps": 6, "intensity": "RPE 8", "rest": "2-3 min", "note": "1.5x shoulder width grip, pull your chest to the bar"}, {"name": "Humble Row", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 8", "rest": "2-3 min", "note": "Pin your lower chest against the top of an incline bench"}, {"name": "Leg Press", "warm": 2, "sets": 3, "reps": 15, "intensity": "RPE 6", "rest": "2-3 min", "note": "Low/medium/high foot placement, don't let your lower back round"}, {"name": "Cable Rope Upright Row", "warm": 0, "sets": 3, "reps": 10, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on squeezing the upper traps at the top"}, {"name": "EZ Bar Skull Crusher", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 7", "rest": "1-2 min", "note": "Arc the bar back behind your head, constant tension on triceps"}, {"name": "Hammer Curl", "warm": 0, "sets": 3, "reps": 8, "intensity": "RPE 9", "rest": "1-2 min", "note": "3-sec eccentric. Arc the dumbbell 'out' not 'up', squeeze forearms"}, {"name": "Bicycle Crunch", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 7", "rest": "1-2 min", "note": "Flex & rotate spine â€“ left elbow to right knee, right elbow to left knee"}], [{"name": "Deadlift", "warm": 3, "sets": 4, "reps": 2, "intensity": "85%", "rest": "3-5 min", "note": "Brace lats, chest tall, hips high, pull the slack out before it moves"}, {"name": "Overhead Press", "warm": 3, "sets": 4, "reps": 6, "intensity": "75%", "rest": "2-3 min", "note": "Squeeze glutes to keep torso upright, clear your head, press up & slightly back"}, {"name": "Leg Extension", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on squeezing your quads to move the weight"}, {"name": "Dumbbell Lateral Raise", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 7", "rest": "1-2 min", "note": "Raise the dumbbell 'out' not 'up', mind-muscle with middle fibers"}, {"name": "Rope Face Pull", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 7", "rest": "1-2 min", "note": "Pull elbows up and out, squeeze shoulder blades together"}, {"name": "Standing Calf Raise", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 7", "rest": "1-2 min", "note": "1-2 second pause at the bottom of each rep"}, {"name": "Hanging Leg Raise", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 7", "rest": "1-2 min", "note": "Roll hips 'up' as you squeeze lower abs, avoid swinging"}, {"name": "Push Up", "warm": 0, "sets": 2, "reps": "RPE only", "intensity": "RPE 6", "rest": "1-2 min", "note": "Perform as many reps as you can to hit the target RPE"}]]}, {"n": 2, "block": "Block 1 · Week 2", "days": [[{"name": "Back Squat", "warm": 3, "sets": 3, "reps": 6, "intensity": "77.5%", "rest": "2-4 min", "note": "Sit back and down, 15° toe flare, drive your knees out laterally"}, {"name": "Dumbbell Incline Press", "warm": 2, "sets": 3, "reps": 8, "intensity": "RPE 8", "rest": "2-3 min", "note": "~45° incline, mind-muscle connection with upper pecs"}, {"name": "Lying Leg Curl", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 6", "rest": "1-2 min", "note": "Focus on squeezing your hamstrings to move the weight"}, {"name": "Pronated Pulldown", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 7", "rest": "2-3 min", "note": "Pull your elbows down and in"}, {"name": "Seated Hip Abduction", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on driving your knees out"}, {"name": "Supinated EZ Bar Curl", "warm": 1, "sets": 3, "reps": "15/15", "intensity": "RPE 9", "rest": "1-2 min", "note": "Dropset weeks: drop weight ~50% on the second half of reps"}, {"name": "Standing Calf Raise", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 7", "rest": "1-2 min", "note": "1-2 second pause at the bottom of each rep"}], [{"name": "Barbell Bench Press", "warm": 3, "sets": 3, "reps": 5, "intensity": "80%", "rest": "2-4 min", "note": "Comfortable arch, 1-2 sec pause on chest, explode off chest"}, {"name": "Low to High Cable Flye", "warm": 0, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "Hands out to sides, palms up â€“ pull elbows up & in while rotating palms to face floor"}, {"name": "Barbell Hip Thrust or RDL", "warm": 2, "sets": 4, "reps": 12, "intensity": "RPE 6", "rest": "2-3 min", "note": "Hip thrust if glutes are priority, RDL if hamstrings are priority. Mind-muscle focus."}, {"name": "Chest-Supported T-Bar Row", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 6", "rest": "1-3 min", "note": "Squeeze shoulder blades together at top, let them round forward at bottom"}, {"name": "Arnold Press", "warm": 0, "sets": 3, "reps": 10, "intensity": "RPE 7", "rest": "1-3 min", "note": "Elbows in front, palms in â€“ rotate palms to face forward as you press"}, {"name": "Tricep Pressdown", "warm": 0, "sets": 3, "reps": 15, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on squeezing triceps to move the weight"}, {"name": "Hex Bar or Smith Machine Shrug", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 6", "rest": "1-2 min", "note": "Shrug up and in, pull shoulders up to ears"}], [{"name": "Weighted Pull-Up", "warm": 2, "sets": 3, "reps": 6, "intensity": "RPE 9", "rest": "2-3 min", "note": "1.5x shoulder width grip, pull your chest to the bar"}, {"name": "Humble Row", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 8", "rest": "2-3 min", "note": "Pin your lower chest against the top of an incline bench"}, {"name": "Leg Press", "warm": 2, "sets": 3, "reps": 15, "intensity": "RPE 6", "rest": "2-3 min", "note": "Low/medium/high foot placement, don't let your lower back round"}, {"name": "Cable Rope Upright Row", "warm": 0, "sets": 3, "reps": 10, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on squeezing the upper traps at the top"}, {"name": "EZ Bar Skull Crusher", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 7", "rest": "1-2 min", "note": "Arc the bar back behind your head, constant tension on triceps"}, {"name": "Hammer Curl", "warm": 0, "sets": 3, "reps": 8, "intensity": "RPE 9", "rest": "1-2 min", "note": "3-sec eccentric. Arc the dumbbell 'out' not 'up', squeeze forearms"}, {"name": "Bicycle Crunch", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 7", "rest": "1-2 min", "note": "Flex & rotate spine â€“ left elbow to right knee, right elbow to left knee"}], [{"name": "Reset Deadlift", "warm": 3, "sets": 3, "reps": 5, "intensity": "80%", "rest": "3-5 min", "note": "Brace lats, chest tall, hips high â€“ dead-stop reset each rep"}, {"name": "Overhead Press", "warm": 3, "sets": 4, "reps": 10, "intensity": "65%", "rest": "2-3 min", "note": "Squeeze glutes to keep torso upright, clear your head, press up & slightly back"}, {"name": "Leg Extension", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on squeezing your quads to move the weight"}, {"name": "Dumbbell Lateral Raise", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 7", "rest": "1-2 min", "note": "Raise the dumbbell 'out' not 'up', mind-muscle with middle fibers"}, {"name": "Rope Face Pull", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 7", "rest": "1-2 min", "note": "Pull elbows up and out, squeeze shoulder blades together"}, {"name": "Standing Calf Raise", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 7", "rest": "1-2 min", "note": "1-2 second pause at the bottom of each rep"}, {"name": "Hanging Leg Raise", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 7", "rest": "1-2 min", "note": "Roll hips 'up' as you squeeze lower abs, avoid swinging"}, {"name": "Push Up", "warm": 0, "sets": 2, "reps": "RPE only", "intensity": "RPE 6", "rest": "1-2 min", "note": "Perform as many reps as you can to hit the target RPE"}]]}, {"n": 3, "block": "Block 1 · Week 3", "days": [[{"name": "Back Squat", "warm": 3, "sets": 4, "reps": 4, "intensity": "80%", "rest": "2-4 min", "note": "Sit back and down, 15° toe flare, drive your knees out laterally"}, {"name": "Dumbbell Incline Press", "warm": 2, "sets": 3, "reps": 8, "intensity": "RPE 9", "rest": "2-3 min", "note": "~45° incline, mind-muscle connection with upper pecs"}, {"name": "Lying Leg Curl", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on squeezing your hamstrings to move the weight"}, {"name": "Pronated Pulldown", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 7", "rest": "2-3 min", "note": "Pull your elbows down and in"}, {"name": "Seated Hip Abduction", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on driving your knees out"}, {"name": "Supinated EZ Bar Curl", "warm": 1, "sets": 3, "reps": "15/15", "intensity": "RPE 10", "rest": "1-2 min", "note": "Dropset weeks: drop weight ~50% on the second half of reps"}, {"name": "Standing Calf Raise", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 7", "rest": "1-2 min", "note": "1-2 second pause at the bottom of each rep"}], [{"name": "Barbell Bench Press", "warm": 3, "sets": 3, "reps": 3, "intensity": "85%", "rest": "2-4 min", "note": "Comfortable arch, 1-2 sec pause on chest, explode off chest"}, {"name": "Low to High Cable Flye", "warm": 0, "sets": 3, "reps": 15, "intensity": "RPE 9", "rest": "1-2 min", "note": "Hands out to sides, palms up â€“ pull elbows up & in while rotating palms to face floor"}, {"name": "Barbell Hip Thrust or RDL", "warm": 2, "sets": 4, "reps": 12, "intensity": "RPE 7", "rest": "2-3 min", "note": "Hip thrust if glutes are priority, RDL if hamstrings are priority. Mind-muscle focus."}, {"name": "Chest-Supported T-Bar Row", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 7", "rest": "1-3 min", "note": "Squeeze shoulder blades together at top, let them round forward at bottom"}, {"name": "Arnold Press", "warm": 0, "sets": 3, "reps": 10, "intensity": "RPE 7", "rest": "1-3 min", "note": "Elbows in front, palms in â€“ rotate palms to face forward as you press"}, {"name": "Tricep Pressdown", "warm": 0, "sets": 3, "reps": 15, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on squeezing triceps to move the weight"}, {"name": "Hex Bar or Smith Machine Shrug", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 7", "rest": "1-2 min", "note": "Shrug up and in, pull shoulders up to ears"}], [{"name": "Weighted Pull-Up", "warm": 2, "sets": 3, "reps": 6, "intensity": "RPE 9", "rest": "2-3 min", "note": "1.5x shoulder width grip, pull your chest to the bar"}, {"name": "Humble Row", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 9", "rest": "2-3 min", "note": "Pin your lower chest against the top of an incline bench"}, {"name": "Leg Press", "warm": 2, "sets": 3, "reps": 15, "intensity": "RPE 7", "rest": "2-3 min", "note": "Low/medium/high foot placement, don't let your lower back round"}, {"name": "Cable Rope Upright Row", "warm": 0, "sets": 3, "reps": 10, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on squeezing the upper traps at the top"}, {"name": "EZ Bar Skull Crusher", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 7", "rest": "1-2 min", "note": "Arc the bar back behind your head, constant tension on triceps"}, {"name": "Hammer Curl", "warm": 0, "sets": 3, "reps": 8, "intensity": "RPE 9", "rest": "1-2 min", "note": "3-sec eccentric. Arc the dumbbell 'out' not 'up', squeeze forearms"}, {"name": "Bicycle Crunch", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 7", "rest": "1-2 min", "note": "Flex & rotate spine â€“ left elbow to right knee, right elbow to left knee"}], [{"name": "Deadlift", "warm": 3, "sets": 4, "reps": 2, "intensity": "87.5%", "rest": "3-5 min", "note": "Brace lats, chest tall, hips high, pull the slack out before it moves"}, {"name": "Overhead Press", "warm": 3, "sets": 4, "reps": 6, "intensity": "77.5%", "rest": "2-3 min", "note": "Squeeze glutes to keep torso upright, clear your head, press up & slightly back"}, {"name": "Leg Extension", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on squeezing your quads to move the weight"}, {"name": "Dumbbell Lateral Raise", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 7", "rest": "1-2 min", "note": "Raise the dumbbell 'out' not 'up', mind-muscle with middle fibers"}, {"name": "Rope Face Pull", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 7", "rest": "1-2 min", "note": "Pull elbows up and out, squeeze shoulder blades together"}, {"name": "Standing Calf Raise", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 7", "rest": "1-2 min", "note": "1-2 second pause at the bottom of each rep"}, {"name": "Hanging Leg Raise", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 7", "rest": "1-2 min", "note": "Roll hips 'up' as you squeeze lower abs, avoid swinging"}, {"name": "Push Up", "warm": 0, "sets": 2, "reps": "RPE only", "intensity": "RPE 7", "rest": "1-2 min", "note": "Perform as many reps as you can to hit the target RPE"}]]}, {"n": 4, "block": "Block 1 · Week 4", "days": [[{"name": "Back Squat", "warm": 3, "sets": 3, "reps": 5, "intensity": "80%", "rest": "2-4 min", "note": "Sit back and down, 15° toe flare, drive your knees out laterally"}, {"name": "Dumbbell Incline Press", "warm": 2, "sets": 3, "reps": 8, "intensity": "RPE 9", "rest": "2-3 min", "note": "~45° incline, mind-muscle connection with upper pecs"}, {"name": "Lying Leg Curl", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on squeezing your hamstrings to move the weight"}, {"name": "Pronated Pulldown", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 8", "rest": "2-3 min", "note": "Pull your elbows down and in"}, {"name": "Seated Hip Abduction", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on driving your knees out"}, {"name": "Supinated EZ Bar Curl", "warm": 1, "sets": 3, "reps": "15/15", "intensity": "RPE 10", "rest": "1-2 min", "note": "Dropset weeks: drop weight ~50% on the second half of reps"}, {"name": "Standing Calf Raise", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 8", "rest": "1-2 min", "note": "1-2 second pause at the bottom of each rep"}], [{"name": "Barbell Bench Press", "warm": 3, "sets": 3, "reps": 5, "intensity": "80%", "rest": "2-4 min", "note": "Comfortable arch, 1-2 sec pause on chest, explode off chest"}, {"name": "Low to High Cable Flye", "warm": 0, "sets": 3, "reps": 15, "intensity": "RPE 9", "rest": "1-2 min", "note": "Hands out to sides, palms up â€“ pull elbows up & in while rotating palms to face floor"}, {"name": "Barbell Hip Thrust or RDL", "warm": 2, "sets": 4, "reps": 12, "intensity": "RPE 8", "rest": "2-3 min", "note": "Hip thrust if glutes are priority, RDL if hamstrings are priority. Mind-muscle focus."}, {"name": "Chest-Supported T-Bar Row", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-3 min", "note": "Squeeze shoulder blades together at top, let them round forward at bottom"}, {"name": "Arnold Press", "warm": 0, "sets": 3, "reps": 10, "intensity": "RPE 8", "rest": "1-3 min", "note": "Elbows in front, palms in â€“ rotate palms to face forward as you press"}, {"name": "Tricep Pressdown", "warm": 0, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on squeezing triceps to move the weight"}, {"name": "Hex Bar or Smith Machine Shrug", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 8", "rest": "1-2 min", "note": "Shrug up and in, pull shoulders up to ears"}], [{"name": "Weighted Pull-Up", "warm": 2, "sets": 3, "reps": 6, "intensity": "RPE 9", "rest": "2-3 min", "note": "1.5x shoulder width grip, pull your chest to the bar"}, {"name": "Humble Row", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 9", "rest": "2-3 min", "note": "Pin your lower chest against the top of an incline bench"}, {"name": "Leg Press", "warm": 2, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "2-3 min", "note": "Low/medium/high foot placement, don't let your lower back round"}, {"name": "Cable Rope Upright Row", "warm": 0, "sets": 3, "reps": 10, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on squeezing the upper traps at the top"}, {"name": "EZ Bar Skull Crusher", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "Arc the bar back behind your head, constant tension on triceps"}, {"name": "Hammer Curl", "warm": 0, "sets": 3, "reps": 8, "intensity": "RPE 9", "rest": "1-2 min", "note": "3-sec eccentric. Arc the dumbbell 'out' not 'up', squeeze forearms"}, {"name": "Bicycle Crunch", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "Flex & rotate spine â€“ left elbow to right knee, right elbow to left knee"}], [{"name": "Reset Deadlift", "warm": 3, "sets": 3, "reps": 5, "intensity": "80%", "rest": "3-5 min", "note": "Brace lats, chest tall, hips high â€“ dead-stop reset each rep"}, {"name": "Overhead Press", "warm": 3, "sets": 4, "reps": 10, "intensity": "67.5%", "rest": "2-3 min", "note": "Squeeze glutes to keep torso upright, clear your head, press up & slightly back"}, {"name": "Leg Extension", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on squeezing your quads to move the weight"}, {"name": "Dumbbell Lateral Raise", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 8", "rest": "1-2 min", "note": "Raise the dumbbell 'out' not 'up', mind-muscle with middle fibers"}, {"name": "Rope Face Pull", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 8", "rest": "1-2 min", "note": "Pull elbows up and out, squeeze shoulder blades together"}, {"name": "Standing Calf Raise", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 8", "rest": "1-2 min", "note": "1-2 second pause at the bottom of each rep"}, {"name": "Hanging Leg Raise", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 8", "rest": "1-2 min", "note": "Roll hips 'up' as you squeeze lower abs, avoid swinging"}, {"name": "Push Up", "warm": 0, "sets": 2, "reps": "RPE only", "intensity": "RPE 8", "rest": "1-2 min", "note": "Perform as many reps as you can to hit the target RPE"}]]}, {"n": 5, "block": "Block 2 · Week 5", "days": [[{"name": "Back Squat", "warm": 3, "sets": 1, "reps": "3-5", "intensity": "87.5%", "rest": "2-4 min", "note": "Sit back and down, 15° toe flare, drive your knees out laterally", "tag": "TOPSET"}, {"name": "Back Squat", "warm": 0, "sets": 2, "reps": 5, "intensity": "75%", "rest": "2-4 min", "note": "Sit back and down, 15° toe flare, drive your knees out laterally", "tag": "BACK OFF"}, {"name": "Barbell Overhead Press", "warm": 2, "sets": 4, "reps": 6, "intensity": "80%", "rest": "2-3 min", "note": "Squeeze glutes to keep torso upright, press up & slightly back"}, {"name": "Swiss Ball Leg Curl", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 7", "rest": "1-2 min", "note": "Prevent hips touching the ground, dig heels into the ball"}, {"name": "Chin-Up", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 7", "rest": "2-3 min", "note": "1.5x shoulder width grip, pull your chest to the bar"}, {"name": "Seated Hip Abduction", "warm": 1, "sets": 4, "reps": 20, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on driving your knees out"}, {"name": "Supinated EZ Bar Curl", "warm": 1, "sets": 4, "reps": "10+2", "intensity": "RPE 10", "rest": "1-2 min", "note": "Dropset weeks: drop weight ~50% on the second half of reps"}, {"name": "Eccentric-Accentuated Standing Calf Raise", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 7", "rest": "1-2 min", "note": "Press onto your toes, 4-second eccentric"}], [{"name": "Barbell Bench Press", "warm": 3, "sets": 3, "reps": 3, "intensity": "87.5%", "rest": "2-4 min", "note": "Comfortable arch, 1-2 sec pause on chest, explode off chest"}, {"name": "Low Incline Dumbbell Press", "warm": 0, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "15° bench angle, tuck your elbows"}, {"name": "Barbell Hip Thrust or RDL", "warm": 2, "sets": 4, "reps": 12, "intensity": "RPE 7", "rest": "2-3 min", "note": "Hip thrust if glutes are priority, RDL if hamstrings are priority. Mind-muscle focus."}, {"name": "Dumbbell Row", "warm": 1, "sets": 4, "reps": 12, "intensity": "RPE 7", "rest": "1-3 min", "note": "Pull the dumbbell to your hip"}, {"name": "Cable Rope Upright Row", "warm": 0, "sets": 3, "reps": 10, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on squeezing the upper traps at the top"}, {"name": "Overhead Tricep Extension", "warm": 0, "sets": 4, "reps": 15, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on squeezing triceps to move the weight"}, {"name": "Hex Bar or Smith Machine Shrug", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 7", "rest": "1-2 min", "note": "Shrug up and in, pull shoulders up to ears"}], [{"name": "Weighted Pull-Up", "warm": 2, "sets": 3, "reps": 6, "intensity": "RPE 9", "rest": "2-3 min", "note": "1.5x shoulder width grip, pull your chest to the bar"}, {"name": "Banded Chest-Supported T-Bar Row", "warm": 1, "sets": 4, "reps": 10, "intensity": "RPE 8", "rest": "2-3 min", "note": "Explosive at the bottom, drive elbows back hard"}, {"name": "Single-Leg Leg Press", "warm": 2, "sets": 4, "reps": 15, "intensity": "RPE 7", "rest": "2-3 min", "note": "Low/medium/high foot placement, don't let lower back round"}, {"name": "Decline Bench Press", "warm": 2, "sets": 4, "reps": 8, "intensity": "RPE 7", "rest": "2-3 min", "note": "Constant tension reps, touch bar to chest"}, {"name": "Cable Lateral Raise", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 8", "rest": "1-2 min", "note": "Swing the weight 'out', not 'up'"}, {"name": "Cable Single-Arm Curl", "warm": 0, "sets": 4, "reps": 8, "intensity": "RPE 7", "rest": "1-2 min", "note": "Keep shoulder joint hyperextended (elbow behind torso)"}, {"name": "Cable Crunch", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on flexing your spine, avoid yanking with your arms"}], [{"name": "Deadlift", "warm": 3, "sets": 1, "reps": 2, "intensity": "90%", "rest": "3-5 min", "note": "Brace lats, chest tall, hips high, pull the slack out before it moves", "tag": "TOPSET"}, {"name": "Reset Deadlift", "warm": 0, "sets": 3, "reps": 2, "intensity": "80%", "rest": "3-5 min", "note": "Brace lats, chest tall, hips high â€“ dead-stop reset each rep", "tag": "BACK OFF"}, {"name": "Overhead Press", "warm": 3, "sets": 4, "reps": 8, "intensity": "80%", "rest": "2-3 min", "note": "Squeeze glutes to keep torso upright, clear your head, press up & slightly back"}, {"name": "Leg Extension", "warm": 1, "sets": 4, "reps": 12, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on squeezing your quads to move the weight"}, {"name": "Dumbbell Lateral Raise", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 7", "rest": "1-2 min", "note": "Raise the dumbbell 'out' not 'up', mind-muscle with middle fibers"}, {"name": "Reverse Pec Deck", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 7", "rest": "1-2 min", "note": "Swing the weight 'out', not 'back'"}, {"name": "Standing Calf Raise", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 7", "rest": "1-2 min", "note": "1-2 second pause at the bottom of each rep"}, {"name": "Ab Wheel Rollout", "warm": 1, "sets": 3, "reps": 6, "intensity": "RPE 7", "rest": "1-2 min", "note": "Squeeze your glutes, don't pull from your arms"}, {"name": "Push Up", "warm": 0, "sets": 2, "reps": "AMRAP", "intensity": "RPE 7", "rest": "1-2 min", "note": "Perform as many reps as you can to hit the target RPE"}]]}, {"n": 6, "block": "Block 2 · Week 6", "days": [[{"name": "Back Squat", "warm": 3, "sets": 1, "reps": 2, "intensity": "90%", "rest": "2-4 min", "note": "Sit back and down, 15° toe flare, drive your knees out laterally", "tag": "TOPSET"}, {"name": "Back Squat", "warm": 0, "sets": 2, "reps": 3, "intensity": "85%", "rest": "2-4 min", "note": "Sit back and down, 15° toe flare, drive your knees out laterally", "tag": "BACK OFF"}, {"name": "Barbell Overhead Press", "warm": 2, "sets": 4, "reps": 8, "intensity": "75%", "rest": "2-3 min", "note": "Squeeze glutes to keep torso upright, press up & slightly back"}, {"name": "Swiss Ball Leg Curl", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 7", "rest": "1-2 min", "note": "Prevent hips touching the ground, dig heels into the ball"}, {"name": "Chin-Up", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 7", "rest": "2-3 min", "note": "1.5x shoulder width grip, pull your chest to the bar"}, {"name": "Seated Hip Abduction", "warm": 1, "sets": 4, "reps": 20, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on driving your knees out"}, {"name": "Supinated EZ Bar Curl", "warm": 1, "sets": 4, "reps": "10+2", "intensity": "RPE 10", "rest": "1-2 min", "note": "Dropset weeks: drop weight ~50% on the second half of reps"}, {"name": "Eccentric-Accentuated Standing Calf Raise", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 7", "rest": "1-2 min", "note": "Press onto your toes, 4-second eccentric"}], [{"name": "Barbell Bench Press", "warm": 3, "sets": 3, "reps": 5, "intensity": "85%", "rest": "2-4 min", "note": "Comfortable arch, 1-2 sec pause on chest, explode off chest"}, {"name": "Low Incline Dumbbell Press", "warm": 0, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "15° bench angle, tuck your elbows"}, {"name": "Barbell Hip Thrust or RDL", "warm": 2, "sets": 4, "reps": 12, "intensity": "RPE 7", "rest": "2-3 min", "note": "Hip thrust if glutes are priority, RDL if hamstrings are priority. Mind-muscle focus."}, {"name": "Dumbbell Row", "warm": 1, "sets": 4, "reps": 12, "intensity": "RPE 7", "rest": "1-3 min", "note": "Pull the dumbbell to your hip"}, {"name": "Cable Rope Upright Row", "warm": 0, "sets": 4, "reps": 10, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on squeezing the upper traps at the top"}, {"name": "Overhead Tricep Extension", "warm": 0, "sets": 4, "reps": 15, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on squeezing triceps to move the weight"}, {"name": "Hex Bar or Smith Machine Shrug", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 7", "rest": "1-2 min", "note": "Shrug up and in, pull shoulders up to ears"}], [{"name": "Weighted Pull-Up", "warm": 2, "sets": 4, "reps": 6, "intensity": "RPE 9", "rest": "2-3 min", "note": "1.5x shoulder width grip, pull your chest to the bar"}, {"name": "Banded Chest-Supported T-Bar Row", "warm": 1, "sets": 4, "reps": 10, "intensity": "RPE 8", "rest": "2-3 min", "note": "Explosive at the bottom, drive elbows back hard"}, {"name": "Single-Leg Leg Press", "warm": 2, "sets": 4, "reps": 15, "intensity": "RPE 7", "rest": "2-3 min", "note": "Low/medium/high foot placement, don't let lower back round"}, {"name": "Decline Bench Press", "warm": 2, "sets": 4, "reps": 8, "intensity": "RPE 7", "rest": "2-3 min", "note": "Constant tension reps, touch bar to chest"}, {"name": "Cable Lateral Raise", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 8", "rest": "1-2 min", "note": "Swing the weight 'out', not 'up'"}, {"name": "Cable Single-Arm Curl", "warm": 0, "sets": 4, "reps": 8, "intensity": "RPE 7", "rest": "1-2 min", "note": "Keep shoulder joint hyperextended (elbow behind torso)"}, {"name": "Cable Crunch", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on flexing your spine, avoid yanking with your arms"}], [{"name": "Deadlift", "warm": 3, "sets": 1, "reps": 4, "intensity": "85%", "rest": "3-5 min", "note": "Brace lats, chest tall, hips high, pull the slack out before it moves", "tag": "TOPSET"}, {"name": "Reset Deadlift", "warm": 0, "sets": 3, "reps": 4, "intensity": "75%", "rest": "3-5 min", "note": "Brace lats, chest tall, hips high â€“ dead-stop reset each rep", "tag": "BACK OFF"}, {"name": "Overhead Press", "warm": 3, "sets": 4, "reps": 4, "intensity": "82.5%", "rest": "2-3 min", "note": "Squeeze glutes to keep torso upright, clear your head, press up & slightly back"}, {"name": "Leg Extension", "warm": 1, "sets": 4, "reps": 12, "intensity": "RPE 7", "rest": "1-2 min", "note": "Focus on squeezing your quads to move the weight"}, {"name": "Dumbbell Lateral Raise", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 7", "rest": "1-2 min", "note": "Raise the dumbbell 'out' not 'up', mind-muscle with middle fibers"}, {"name": "Reverse Pec Deck", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 7", "rest": "1-2 min", "note": "Swing the weight 'out', not 'back'"}, {"name": "Standing Calf Raise", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 7", "rest": "1-2 min", "note": "1-2 second pause at the bottom of each rep"}, {"name": "Ab Wheel Rollout", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 7", "rest": "1-2 min", "note": "Squeeze your glutes, don't pull from your arms"}, {"name": "Push Up", "warm": 0, "sets": 2, "reps": "AMRAP", "intensity": "RPE 7", "rest": "1-2 min", "note": "Perform as many reps as you can to hit the target RPE"}]]}, {"n": 7, "block": "Block 2 · Week 7", "days": [[{"name": "Back Squat", "warm": 3, "sets": 1, "reps": "6-8", "intensity": "80%", "rest": "2-4 min", "note": "Sit back and down, 15° toe flare, drive your knees out laterally", "tag": "TOPSET"}, {"name": "Back Squat", "warm": 0, "sets": 2, "reps": 8, "intensity": "70%", "rest": "2-4 min", "note": "Sit back and down, 15° toe flare, drive your knees out laterally", "tag": "BACK OFF"}, {"name": "Barbell Overhead Press", "warm": 2, "sets": 4, "reps": 10, "intensity": "65%", "rest": "2-3 min", "note": "Squeeze glutes to keep torso upright, press up & slightly back"}, {"name": "Swiss Ball Leg Curl", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 8", "rest": "1-2 min", "note": "Prevent hips touching the ground, dig heels into the ball"}, {"name": "Chin-Up", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 8", "rest": "2-3 min", "note": "1.5x shoulder width grip, pull your chest to the bar"}, {"name": "Seated Hip Abduction", "warm": 1, "sets": 4, "reps": 20, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on driving your knees out"}, {"name": "Supinated EZ Bar Curl", "warm": 1, "sets": 4, "reps": "10+2", "intensity": "RPE 10", "rest": "1-2 min", "note": "Dropset weeks: drop weight ~50% on the second half of reps"}, {"name": "Eccentric-Accentuated Standing Calf Raise", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 8", "rest": "1-2 min", "note": "Press onto your toes, 4-second eccentric"}], [{"name": "Barbell Bench Press", "warm": 3, "sets": 3, "reps": 10, "intensity": "75%", "rest": "2-4 min", "note": "Comfortable arch, 1-2 sec pause on chest, explode off chest"}, {"name": "Low Incline Dumbbell Press", "warm": 0, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "15° bench angle, tuck your elbows"}, {"name": "Barbell Hip Thrust or RDL", "warm": 2, "sets": 4, "reps": 12, "intensity": "RPE 8", "rest": "2-3 min", "note": "Hip thrust if glutes are priority, RDL if hamstrings are priority. Mind-muscle focus."}, {"name": "Dumbbell Row", "warm": 1, "sets": 4, "reps": 12, "intensity": "RPE 8", "rest": "1-3 min", "note": "Pull the dumbbell to your hip"}, {"name": "Cable Rope Upright Row", "warm": 0, "sets": 4, "reps": 10, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on squeezing the upper traps at the top"}, {"name": "Overhead Tricep Extension", "warm": 0, "sets": 4, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on squeezing triceps to move the weight"}, {"name": "Hex Bar or Smith Machine Shrug", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 8", "rest": "1-2 min", "note": "Shrug up and in, pull shoulders up to ears"}], [{"name": "Weighted Pull-Up", "warm": 2, "sets": 3, "reps": 6, "intensity": "RPE 9", "rest": "2-3 min", "note": "1.5x shoulder width grip, pull your chest to the bar"}, {"name": "Banded Chest-Supported T-Bar Row", "warm": 1, "sets": 4, "reps": 10, "intensity": "RPE 8", "rest": "2-3 min", "note": "Explosive at the bottom, drive elbows back hard"}, {"name": "Single-Leg Leg Press", "warm": 2, "sets": 4, "reps": 15, "intensity": "RPE 8", "rest": "2-3 min", "note": "Low/medium/high foot placement, don't let lower back round"}, {"name": "Decline Bench Press", "warm": 2, "sets": 4, "reps": 8, "intensity": "RPE 7", "rest": "2-3 min", "note": "Constant tension reps, touch bar to chest"}, {"name": "Cable Lateral Raise", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 8", "rest": "1-2 min", "note": "Swing the weight 'out', not 'up'"}, {"name": "Cable Single-Arm Curl", "warm": 0, "sets": 4, "reps": 8, "intensity": "RPE 8", "rest": "1-2 min", "note": "Keep shoulder joint hyperextended (elbow behind torso)"}, {"name": "Cable Crunch", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on flexing your spine, avoid yanking with your arms"}], [{"name": "Deadlift", "warm": 3, "sets": 1, "reps": 6, "intensity": "80%", "rest": "3-5 min", "note": "Brace lats, chest tall, hips high, pull the slack out before it moves", "tag": "TOPSET"}, {"name": "Reset Deadlift", "warm": 0, "sets": 3, "reps": 6, "intensity": "70%", "rest": "3-5 min", "note": "Brace lats, chest tall, hips high â€“ dead-stop reset each rep", "tag": "BACK OFF"}, {"name": "Overhead Press", "warm": 3, "sets": 4, "reps": 6, "intensity": "80%", "rest": "2-3 min", "note": "Squeeze glutes to keep torso upright, clear your head, press up & slightly back"}, {"name": "Leg Extension", "warm": 1, "sets": 4, "reps": 12, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on squeezing your quads to move the weight"}, {"name": "Dumbbell Lateral Raise", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 8", "rest": "1-2 min", "note": "Raise the dumbbell 'out' not 'up', mind-muscle with middle fibers"}, {"name": "Reverse Pec Deck", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 8", "rest": "1-2 min", "note": "Swing the weight 'out', not 'back'"}, {"name": "Standing Calf Raise", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 8", "rest": "1-2 min", "note": "1-2 second pause at the bottom of each rep"}, {"name": "Ab Wheel Rollout", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 8", "rest": "1-2 min", "note": "Squeeze your glutes, don't pull from your arms"}, {"name": "Push Up", "warm": 0, "sets": 2, "reps": "AMRAP", "intensity": "RPE 8", "rest": "1-2 min", "note": "Perform as many reps as you can to hit the target RPE"}]]}, {"n": 8, "block": "Block 2 · Week 8", "days": [[{"name": "Back Squat", "warm": 3, "sets": 1, "reps": 2, "intensity": "92.5%", "rest": "2-4 min", "note": "Sit back and down, 15° toe flare, drive your knees out laterally", "tag": "TOPSET"}, {"name": "Back Squat", "warm": 0, "sets": 2, "reps": 2, "intensity": "85%", "rest": "2-4 min", "note": "Sit back and down, 15° toe flare, drive your knees out laterally", "tag": "BACK OFF"}, {"name": "Barbell Overhead Press", "warm": 2, "sets": 4, "reps": 5, "intensity": "80%", "rest": "2-3 min", "note": "Squeeze glutes to keep torso upright, press up & slightly back"}, {"name": "Swiss Ball Leg Curl", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 8", "rest": "1-2 min", "note": "Prevent hips touching the ground, dig heels into the ball"}, {"name": "Chin-Up", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 8", "rest": "2-3 min", "note": "1.5x shoulder width grip, pull your chest to the bar"}, {"name": "Seated Hip Abduction", "warm": 1, "sets": 4, "reps": 20, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on driving your knees out"}, {"name": "Supinated EZ Bar Curl", "warm": 1, "sets": 4, "reps": "10+2", "intensity": "RPE 10", "rest": "1-2 min", "note": "Dropset weeks: drop weight ~50% on the second half of reps"}, {"name": "Eccentric-Accentuated Standing Calf Raise", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 8", "rest": "1-2 min", "note": "Press onto your toes, 4-second eccentric"}], [{"name": "Barbell Bench Press", "warm": 3, "sets": 4, "reps": 2, "intensity": "90%", "rest": "2-4 min", "note": "Comfortable arch, 1-2 sec pause on chest, explode off chest"}, {"name": "Low Incline Dumbbell Press", "warm": 0, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "15° bench angle, tuck your elbows"}, {"name": "Barbell Hip Thrust or RDL", "warm": 2, "sets": 4, "reps": 12, "intensity": "RPE 8", "rest": "2-3 min", "note": "Hip thrust if glutes are priority, RDL if hamstrings are priority. Mind-muscle focus."}, {"name": "Dumbbell Row", "warm": 1, "sets": 4, "reps": 12, "intensity": "RPE 8", "rest": "1-3 min", "note": "Pull the dumbbell to your hip"}, {"name": "Cable Rope Upright Row", "warm": 0, "sets": 4, "reps": 10, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on squeezing the upper traps at the top"}, {"name": "Overhead Tricep Extension", "warm": 0, "sets": 4, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on squeezing triceps to move the weight"}, {"name": "Hex Bar or Smith Machine Shrug", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 8", "rest": "1-2 min", "note": "Shrug up and in, pull shoulders up to ears"}], [{"name": "Weighted Pull-Up", "warm": 2, "sets": 4, "reps": 6, "intensity": "RPE 9", "rest": "2-3 min", "note": "1.5x shoulder width grip, pull your chest to the bar"}, {"name": "Banded Chest-Supported T-Bar Row", "warm": 1, "sets": 4, "reps": 10, "intensity": "RPE 8", "rest": "2-3 min", "note": "Explosive at the bottom, drive elbows back hard"}, {"name": "Single-Leg Leg Press", "warm": 2, "sets": 4, "reps": 15, "intensity": "RPE 8", "rest": "2-3 min", "note": "Low/medium/high foot placement, don't let lower back round"}, {"name": "Decline Bench Press", "warm": 2, "sets": 4, "reps": 8, "intensity": "RPE 8", "rest": "2-3 min", "note": "Constant tension reps, touch bar to chest"}, {"name": "Cable Lateral Raise", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 8", "rest": "1-2 min", "note": "Swing the weight 'out', not 'up'"}, {"name": "Cable Single-Arm Curl", "warm": 0, "sets": 4, "reps": 8, "intensity": "RPE 8", "rest": "1-2 min", "note": "Keep shoulder joint hyperextended (elbow behind torso)"}, {"name": "Cable Crunch", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on flexing your spine, avoid yanking with your arms"}], [{"name": "Deadlift", "warm": 3, "sets": 1, "reps": 2, "intensity": "95%", "rest": "3-5 min", "note": "Brace lats, chest tall, hips high, pull the slack out before it moves", "tag": "TOPSET"}, {"name": "Reset Deadlift", "warm": 0, "sets": 1, "reps": 3, "intensity": "85%", "rest": "3-5 min", "note": "Brace lats, chest tall, hips high â€“ dead-stop reset each rep", "tag": "BACK OFF"}, {"name": "Overhead Press", "warm": 3, "sets": 5, "reps": 3, "intensity": "87.5%", "rest": "2-3 min", "note": "Squeeze glutes to keep torso upright, clear your head, press up & slightly back"}, {"name": "Leg Extension", "warm": 1, "sets": 4, "reps": 12, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on squeezing your quads to move the weight"}, {"name": "Dumbbell Lateral Raise", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 8", "rest": "1-2 min", "note": "Raise the dumbbell 'out' not 'up', mind-muscle with middle fibers"}, {"name": "Reverse Pec Deck", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 8", "rest": "1-2 min", "note": "Swing the weight 'out', not 'back'"}, {"name": "Standing Calf Raise", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 8", "rest": "1-2 min", "note": "1-2 second pause at the bottom of each rep"}, {"name": "Ab Wheel Rollout", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 8", "rest": "1-2 min", "note": "Squeeze your glutes, don't pull from your arms"}, {"name": "Push Up", "warm": 0, "sets": 2, "reps": "AMRAP", "intensity": "RPE 8", "rest": "1-2 min", "note": "Perform as many reps as you can to hit the target RPE"}]]}, {"n": 9, "block": "Deload · Week 9", "days": [[{"name": "Back Squat", "warm": 3, "sets": 4, "reps": 4, "intensity": "75%", "rest": "2-4 min", "note": "Sit back and down, 15° toe flare, drive your knees out laterally"}, {"name": "Barbell Bench Press", "warm": 2, "sets": 3, "reps": 4, "intensity": "70%", "rest": "2-3 min", "note": "Comfortable arch, 1-2 sec pause on chest, explode off chest"}, {"name": "Lying Leg Curl", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 6", "rest": "1-2 min", "note": "Focus on squeezing your hamstrings to move the weight"}, {"name": "Pronated Pulldown", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 6", "rest": "2-3 min", "note": "Pull your elbows down and in"}, {"name": "Seated Hip Abduction", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 6", "rest": "1-2 min", "note": "Focus on driving your knees out"}, {"name": "Supinated EZ Bar Curl", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 6", "rest": "1-2 min", "note": "Dropset weeks: drop weight ~50% on the second half of reps"}, {"name": "Standing Calf Raise", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 6", "rest": "1-2 min", "note": "1-2 second pause at the bottom of each rep"}], [{"name": "Barbell Bench Press", "warm": 3, "sets": 3, "reps": 3, "intensity": "80%", "rest": "2-4 min", "note": "Comfortable arch, 1-2 sec pause on chest, explode off chest"}, {"name": "Low to High Cable Flye", "warm": 0, "sets": 3, "reps": 15, "intensity": "RPE 6", "rest": "1-2 min", "note": "Hands out to sides, palms up â€“ pull elbows up & in while rotating palms to face floor"}, {"name": "Deadlift", "warm": 2, "sets": 3, "reps": 3, "intensity": "75%", "rest": "2-3 min", "note": "Brace lats, chest tall, hips high, pull the slack out before it moves"}, {"name": "Chest-Supported T-Bar Row", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 6", "rest": "1-3 min", "note": "Squeeze shoulder blades together at top, let them round forward at bottom"}, {"name": "Dumbbell Lateral Raise", "warm": 0, "sets": 3, "reps": 10, "intensity": "RPE 6", "rest": "1-3 min", "note": "Raise the dumbbell 'out' not 'up', mind-muscle with middle fibers"}, {"name": "Tricep Pressdown", "warm": 0, "sets": 3, "reps": 15, "intensity": "RPE 6", "rest": "1-2 min", "note": "Focus on squeezing triceps to move the weight"}, {"name": "Hex Bar or Smith Machine Shrug", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 6", "rest": "1-2 min", "note": "Shrug up and in, pull shoulders up to ears"}], [{"name": "Wide Grip Lat Pulldown", "warm": 2, "sets": 3, "reps": 6, "intensity": "RPE 6", "rest": "2-3 min", "note": "Pull with your chest to the bar"}, {"name": "Chest Supported T Bar Row", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 6", "rest": "2-3 min", "note": "Focus on retraction, transverse abduction"}, {"name": "Leg Press", "warm": 2, "sets": 3, "reps": 12, "intensity": "RPE 6", "rest": "2-3 min", "note": "Low/medium/high foot placement, don't let your lower back round"}, {"name": "Cable Rope Upright Row", "warm": 0, "sets": 3, "reps": 10, "intensity": "RPE 6", "rest": "1-2 min", "note": "Focus on squeezing the upper traps at the top"}, {"name": "EZ Bar Skull Crusher", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 6", "rest": "1-2 min", "note": "Arc the bar back behind your head, constant tension on triceps"}, {"name": "Hammer Curl", "warm": 0, "sets": 3, "reps": 8, "intensity": "RPE 6", "rest": "1-2 min", "note": "3-sec eccentric. Arc the dumbbell 'out' not 'up', squeeze forearms"}, {"name": "Bicycle Crunch", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 6", "rest": "1-2 min", "note": "Flex & rotate spine â€“ left elbow to right knee, right elbow to left knee"}], [{"name": "Deadlift", "warm": 3, "sets": 3, "reps": 2, "intensity": "80%", "rest": "3-5 min", "note": "Brace lats, chest tall, hips high, pull the slack out before it moves"}, {"name": "Overhead Press", "warm": 3, "sets": 4, "reps": 6, "intensity": "75%", "rest": "2-3 min", "note": "Squeeze glutes to keep torso upright, clear your head, press up & slightly back"}, {"name": "Leg Extension", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 6", "rest": "1-2 min", "note": "Focus on squeezing your quads to move the weight"}, {"name": "Dumbbell Lateral Raise", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 6", "rest": "1-2 min", "note": "Raise the dumbbell 'out' not 'up', mind-muscle with middle fibers"}, {"name": "Rope Face Pull", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 6", "rest": "1-2 min", "note": "Pull elbows up and out, squeeze shoulder blades together"}, {"name": "Standing Calf Raise", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 6", "rest": "1-2 min", "note": "1-2 second pause at the bottom of each rep"}, {"name": "Cable Crunch", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 6", "rest": "1-2 min", "note": "Focus on flexing your spine, avoid yanking with your arms"}, {"name": "Push Up", "warm": 0, "sets": 2, "reps": "AMRAP", "intensity": "RPE 6", "rest": "1-2 min", "note": "Perform as many reps as you can to hit the target RPE"}]]}, {"n": 10, "block": "Max Test · Week 10", "days": [[{"name": "Back Squat", "warm": 3, "sets": 1, "reps": "AMRAP", "intensity": "90%", "rest": "2-4 min", "note": "Sit back and down, 15° toe flare, drive your knees out laterally", "tag": "TOPSET"}, {"name": "Back Squat", "warm": 0, "sets": 2, "reps": 6, "intensity": "75%", "rest": "2-4 min", "note": "Sit back and down, 15° toe flare, drive your knees out laterally", "tag": "BACK OFF"}, {"name": "Dumbbell Incline Press", "warm": 2, "sets": 3, "reps": 8, "intensity": "RPE 5", "rest": "2-3 min", "note": "~45° incline, mind-muscle connection with upper pecs"}, {"name": "Lying Leg Curl", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on squeezing your hamstrings to move the weight"}, {"name": "Pronated Pulldown", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 8", "rest": "2-3 min", "note": "Pull your elbows down and in"}, {"name": "Seated Hip Abduction", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on driving your knees out"}, {"name": "Supinated EZ Bar Curl", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 9", "rest": "1-2 min", "note": "Dropset weeks: drop weight ~50% on the second half of reps"}, {"name": "Standing Calf Raise", "warm": 1, "sets": 3, "reps": 8, "intensity": "RPE 8", "rest": "1-2 min", "note": "1-2 second pause at the bottom of each rep"}], [{"name": "Barbell Bench Press", "warm": 3, "sets": 1, "reps": "AMRAP", "intensity": "90%", "rest": "2-4 min", "note": "Comfortable arch, 1-2 sec pause on chest, explode off chest", "tag": "TOPSET"}, {"name": "Barbell Bench Press", "warm": 0, "sets": 2, "reps": 5, "intensity": "75%", "rest": "2-4 min", "note": "Comfortable arch, 1-2 sec pause on chest, explode off chest", "tag": "BACK OFF"}, {"name": "Low to High Cable Flye", "warm": 0, "sets": 3, "reps": 15, "intensity": "RPE 9", "rest": "1-2 min", "note": "Hands out to sides, palms up â€“ pull elbows up & in while rotating palms to face floor"}, {"name": "Barbell Hip Thrust or RDL", "warm": 2, "sets": 4, "reps": 12, "intensity": "RPE 5", "rest": "2-3 min", "note": "Hip thrust if glutes are priority, RDL if hamstrings are priority. Mind-muscle focus."}, {"name": "Chest-Supported T-Bar Row", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-3 min", "note": "Squeeze shoulder blades together at top, let them round forward at bottom"}, {"name": "Arnold Press", "warm": 0, "sets": 3, "reps": 10, "intensity": "RPE 8", "rest": "1-3 min", "note": "Elbows in front, palms in â€“ rotate palms to face forward as you press"}, {"name": "Tricep Pressdown", "warm": 0, "sets": 3, "reps": 15, "intensity": "RPE 9", "rest": "1-2 min", "note": "Focus on squeezing triceps to move the weight"}, {"name": "Hex Bar or Smith Machine Shrug", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 10", "rest": "1-2 min", "note": "Shrug up and in, pull shoulders up to ears"}], [{"name": "Weighted Pull-Up", "warm": 2, "sets": 3, "reps": 6, "intensity": "RPE 9", "rest": "2-3 min", "note": "1.5x shoulder width grip, pull your chest to the bar"}, {"name": "Humble Row", "warm": 1, "sets": 3, "reps": 10, "intensity": "RPE 8", "rest": "2-3 min", "note": "Pin your lower chest against the top of an incline bench"}, {"name": "Leg Press", "warm": 2, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "2-3 min", "note": "Low/medium/high foot placement, don't let your lower back round"}, {"name": "Cable Rope Upright Row", "warm": 0, "sets": 3, "reps": 10, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on squeezing the upper traps at the top"}, {"name": "EZ Bar Skull Crusher", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "Arc the bar back behind your head, constant tension on triceps"}, {"name": "Hammer Curl", "warm": 0, "sets": 3, "reps": 8, "intensity": "RPE 10", "rest": "1-2 min", "note": "3-sec eccentric. Arc the dumbbell 'out' not 'up', squeeze forearms"}, {"name": "Bicycle Crunch", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "Flex & rotate spine â€“ left elbow to right knee, right elbow to left knee"}], [{"name": "Deadlift", "warm": 3, "sets": 1, "reps": "AMRAP", "intensity": "90%", "rest": "3-5 min", "note": "Brace lats, chest tall, hips high, pull the slack out before it moves", "tag": "TOPSET"}, {"name": "Reset Deadlift", "warm": 0, "sets": 2, "reps": 5, "intensity": "75%", "rest": "3-5 min", "note": "Brace lats, chest tall, hips high â€“ dead-stop reset each rep", "tag": "BACK OFF"}, {"name": "Overhead Press", "warm": 3, "sets": 4, "reps": 10, "intensity": "75-80%", "rest": "2-3 min", "note": "Squeeze glutes to keep torso upright, clear your head, press up & slightly back"}, {"name": "Leg Extension", "warm": 1, "sets": 3, "reps": 15, "intensity": "RPE 8", "rest": "1-2 min", "note": "Focus on squeezing your quads to move the weight"}, {"name": "Dumbbell Lateral Raise", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 8", "rest": "1-2 min", "note": "Raise the dumbbell 'out' not 'up', mind-muscle with middle fibers"}, {"name": "Rope Face Pull", "warm": 1, "sets": 3, "reps": 20, "intensity": "RPE 8", "rest": "1-2 min", "note": "Pull elbows up and out, squeeze shoulder blades together"}, {"name": "Standing Calf Raise", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 8", "rest": "1-2 min", "note": "1-2 second pause at the bottom of each rep"}, {"name": "Cable Crunch", "warm": 1, "sets": 3, "reps": 12, "intensity": "RPE 6", "rest": "1-2 min", "note": "Focus on flexing your spine, avoid yanking with your arms"}, {"name": "Push Up", "warm": 0, "sets": 2, "reps": "AMRAP", "intensity": "RPE 10", "rest": "1-2 min", "note": "Perform as many reps as you can to hit the target RPE"}]]}]};</script>
+<script>
+let PROGRAM = null;
+let state = { week:1, day:1, tab:'today' };
+let timers = {}; // exIndex -> {remaining, interval}
+let currentLog = {}; // exIndex -> {sets:[{w,r,rpe,done}]}
+
+async function loadProgram(){
+  PROGRAM = PROGRAM_DATA;
+}
+
+function key(week, day){ return `hffb:w${week}d${day}`; }
+
+async function getLog(week, day){
+  try{
+    const raw = localStorage.getItem(key(week,day));
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+async function saveLog(week, day, data){
+  try{
+    localStorage.setItem(key(week,day), JSON.stringify(data));
+    return true;
+  }catch(e){ console.error(e); return false; }
+}
+async function findLastLog(week, day, beforeWeek){
+  // search backward through weeks for same day-of-week that has data
+  for(let w = beforeWeek-1; w >= 1; w--){
+    const l = await getLog(w, day);
+    if(l && l.sets) return {week:w, data:l};
+  }
+  return null;
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1600);
+}
+
+function renderWeekStrip(){
+  const strip = document.getElementById('weekStrip');
+  strip.innerHTML = '';
+  PROGRAM.weeks.forEach(w=>{
+    const p = document.createElement('div');
+    p.className = 'week-pill' + (w.n===state.week ? ' active':'');
+    p.textContent = 'W'+w.n;
+    p.onclick = ()=>{ state.week = w.n; renderAll(); };
+    strip.appendChild(p);
+  });
+  document.getElementById('blockLabel').textContent = PROGRAM.weeks[state.week-1].block;
+}
+
+function renderDayTabs(){
+  const tabs = document.getElementById('dayTabs');
+  tabs.innerHTML='';
+  [1,2,3,4].forEach(d=>{
+    const b = document.createElement('div');
+    b.className = 'day-tab' + (d===state.day?' active':'');
+    b.textContent = 'Day '+d;
+    b.onclick = ()=>{ state.day = d; renderAll(); };
+    tabs.appendChild(b);
+  });
+  document.getElementById('dayFocus').textContent = PROGRAM.dayNames[state.day];
+}
+
+function fmtTime(s){
+  const m = Math.floor(s/60), sec = s%60;
+  return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+}
+
+function restSeconds(restStr){
+  // "2-4 min" -> use upper bound in seconds, "1-2 min" etc
+  const m = restStr.match(/(\d+)-(\d+)/);
+  if(m) return parseInt(m[2])*60;
+  const s = restStr.match(/(\d+)/);
+  return s ? parseInt(s[1])*60 : 120;
+}
+
+async function renderToday(){
+  const view = document.getElementById('todayView');
+  view.innerHTML = '<div style="text-align:center;color:var(--text-faint);padding:40px;font-size:12px;">Loading…</div>';
+  const wk = PROGRAM.weeks[state.week-1];
+  const exercises = wk.days[state.day-1];
+  const existing = await getLog(state.week, state.day);
+  const last = await findLastLog(state.week, state.day, state.week);
+
+  currentLog = existing && existing.sets ? existing : { sets: exercises.map(ex=>({
+    reps: Array.from({length:ex.sets}, ()=>({w:'', r:'', rpe:'', done:false}))
+  }))};
+
+  view.innerHTML = '';
+  exercises.forEach((ex, i)=>{
+    const card = document.createElement('div');
+    card.className = 'excard';
+    card.id = 'ex-'+i;
+
+    let tagHtml = '';
+    if(ex.tag === 'TOPSET') tagHtml = '<span class="extag topset">TOP SET</span>';
+    if(ex.tag === 'BACK OFF') tagHtml = '<span class="extag backoff">BACK OFF</span>';
+
+    let lastHint = '';
+    if(last && last.data.sets[i]){
+      const ls = last.data.sets[i].reps.filter(s=>s.w);
+      if(ls.length){
+        const top = ls[0];
+        lastHint = `<div class="last-hint">Last: W${last.week} · ${top.w}kg × ${top.r}${top.rpe?(' @ RPE '+top.rpe):''}</div>`;
+      }
+    }
+
+    card.innerHTML = `
+      <div class="exhead">
+        <div>
+          <div class="exname">${tagHtml}${ex.name}</div>
+          <div class="exmeta">${ex.warm>0? ex.warm+' warm-up + ':''}<b>${ex.sets}×${ex.reps}</b> · ${ex.intensity} · rest ${ex.rest}</div>
+        </div>
+      </div>
+      ${ex.note ? `<div class="exnote">${ex.note}</div>` : ''}
+      ${lastHint}
+      <div class="sets">
+        <div class="col-labels"><span></span><span>KG</span><span>REPS</span><span>RPE</span><span></span></div>
+        ${ex.sets_html||''}
+      </div>
+      <div class="rest-row">
+        <button class="rest-btn" data-exi="${i}">Start rest</button>
+        <div class="timer-display" id="timer-${i}">${ex.rest}</div>
+      </div>
+    `;
+
+    const setsDiv = card.querySelector('.sets');
+    for(let s=0; s<ex.sets; s++){
+      const row = document.createElement('div');
+      row.className = 'setrow';
+      const logged = currentLog.sets[i] && currentLog.sets[i].reps[s] ? currentLog.sets[i].reps[s] : {w:'',r:'',rpe:'',done:false};
+      row.innerHTML = `
+        <span class="sn">${s+1}</span>
+        <input type="number" inputmode="decimal" placeholder="kg" value="${logged.w}" data-exi="${i}" data-si="${s}" data-f="w">
+        <input type="number" inputmode="numeric" placeholder="${ex.reps}" value="${logged.r}" data-exi="${i}" data-si="${s}" data-f="r">
+        <input type="number" inputmode="numeric" placeholder="RPE" value="${logged.rpe}" data-exi="${i}" data-si="${s}" data-f="rpe">
+        <div class="chk ${logged.done?'on':''}" data-exi="${i}" data-si="${s}">&#10003;</div>
+      `;
+      setsDiv.appendChild(row);
+    }
+    view.appendChild(card);
+  });
+
+  const saveBar = document.createElement('div');
+  saveBar.className = 'save-bar';
+  saveBar.innerHTML = `<button class="save-btn" id="saveWorkoutBtn">Save Workout</button>`;
+  view.appendChild(saveBar);
+
+  // wire inputs
+  view.querySelectorAll('.setrow input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const {exi, si, f} = e.target.dataset;
+      if(!currentLog.sets[exi]) currentLog.sets[exi] = {reps:[]};
+      if(!currentLog.sets[exi].reps[si]) currentLog.sets[exi].reps[si] = {w:'',r:'',rpe:'',done:false};
+      currentLog.sets[exi].reps[si][f] = e.target.value;
+    });
+  });
+  view.querySelectorAll('.chk').forEach(chk=>{
+    chk.addEventListener('click', e=>{
+      const {exi, si} = e.target.dataset;
+      if(!currentLog.sets[exi]) currentLog.sets[exi] = {reps:[]};
+      if(!currentLog.sets[exi].reps[si]) currentLog.sets[exi].reps[si] = {w:'',r:'',rpe:'',done:false};
+      currentLog.sets[exi].reps[si].done = !currentLog.sets[exi].reps[si].done;
+      chk.classList.toggle('on');
+      checkCardDone(exi);
+    });
+  });
+  view.querySelectorAll('.rest-btn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const exi = e.target.dataset.exi;
+      startRestTimer(exi, exercises[exi].rest);
+    });
+  });
+  document.getElementById('saveWorkoutBtn').addEventListener('click', async ()=>{
+    const ok = await saveLog(state.week, state.day, currentLog);
+    showToast(ok ? 'Workout saved' : 'Save failed');
+  });
+
+  exercises.forEach((ex,i)=> checkCardDone(i));
+}
+
+function checkCardDone(exi){
+  const card = document.getElementById('ex-'+exi);
+  if(!card) return;
+  const chks = card.querySelectorAll('.chk');
+  const allDone = Array.from(chks).every(c=>c.classList.contains('on'));
+  card.classList.toggle('done', allDone && chks.length>0);
+}
+
+function startRestTimer(exi, restStr){
+  if(timers[exi]) clearInterval(timers[exi].interval);
+  let remaining = restSeconds(restStr);
+  const display = document.getElementById('timer-'+exi);
+  const btn = document.querySelector(`.rest-btn[data-exi="${exi}"]`);
+  btn.classList.add('running');
+  btn.textContent = 'Reset';
+  display.textContent = fmtTime(remaining);
+  const interval = setInterval(()=>{
+    remaining--;
+    if(remaining <= 0){
+      clearInterval(interval);
+      display.textContent = "Go!";
+      btn.classList.remove('running');
+      btn.textContent = 'Start rest';
+      if(navigator.vibrate) navigator.vibrate([200,100,200]);
+      showToast('Rest complete — '+document.querySelector(`#ex-${exi} .exname`).textContent.replace(/TOP SET|BACK OFF/,'').trim());
+      delete timers[exi];
+      return;
+    }
+    display.textContent = fmtTime(remaining);
+  }, 1000);
+  timers[exi] = {interval, remaining};
+}
+
+async function renderHistory(){
+  const view = document.getElementById('historyView');
+  view.innerHTML = '<div style="text-align:center;color:var(--text-faint);padding:40px;font-size:12px;">Loading…</div>';
+  let entries = [];
+  for(const wk of PROGRAM.weeks){
+    for(let d=1; d<=4; d++){
+      const log = await getLog(wk.n, d);
+      if(log && log.sets && log.sets.some(s=>s.reps && s.reps.some(r=>r.w))){
+        entries.push({week:wk.n, day:d, block:wk.block, log});
+      }
+    }
+  }
+  if(entries.length === 0){
+    view.innerHTML = `<div class="hist-empty">No workouts logged yet.<br>Complete a session and hit "Save Workout" to build your history.</div>`;
+    return;
+  }
+  entries.sort((a,b)=> (b.week-a.week) || (b.day-a.day));
+  view.innerHTML = '';
+  entries.forEach(entry=>{
+    const exList = PROGRAM.weeks[entry.week-1].days[entry.day-1];
+    const div = document.createElement('div');
+    div.className = 'hist-day';
+    let rows = '';
+    exList.forEach((ex,i)=>{
+      const s = entry.log.sets[i];
+      if(!s || !s.reps) return;
+      const done = s.reps.filter(r=>r.w);
+      if(!done.length) return;
+      const summary = done.map(r=>`${r.w}×${r.r}${r.rpe?'@'+r.rpe:''}`).join(', ');
+      rows += `<div class="hist-ex"><b>${ex.name}</b><span>${summary}</span></div>`;
+    });
+    div.innerHTML = `<div class="hist-day-title"><span>Week ${entry.week} · Day ${entry.day}</span><span>${PROGRAM.dayNames[entry.day]}</span></div>${rows}`;
+    view.appendChild(div);
+  });
+}
+
+function renderProgram(){
+  const view = document.getElementById('programView');
+  view.innerHTML = '';
+  PROGRAM.weeks.forEach(wk=>{
+    const div = document.createElement('div');
+    div.className = 'ov-week';
+    let days = '';
+    wk.days.forEach((d, idx)=>{
+      const names = d.map(e=>e.name).join(', ');
+      days += `<div class="ov-day"><b>D${idx+1}</b>${PROGRAM.dayNames[idx+1]} — ${names}</div>`;
+    });
+    div.innerHTML = `<div class="ov-week-title">${wk.block}</div>${days}`;
+    div.onclick = ()=>{ state.week = wk.n; switchTab('today'); };
+    view.appendChild(div);
+  });
+}
+
+function switchTab(tab){
+  state.tab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.getElementById('todayView').classList.toggle('hidden', tab!=='today');
+  document.getElementById('historyView').classList.toggle('hidden', tab!=='history');
+  document.getElementById('programView').classList.toggle('hidden', tab!=='program');
+  document.getElementById('workoutTabs').classList.toggle('hidden', tab!=='today');
+  if(tab==='history') renderHistory();
+  if(tab==='program') renderProgram();
+}
+
+async function renderAll(){
+  renderWeekStrip();
+  renderDayTabs();
+  if(state.tab==='today') await renderToday();
+  if(state.tab==='history') await renderHistory();
+  if(state.tab==='program') renderProgram();
+}
+
+document.querySelectorAll('.tab-btn').forEach(b=>{
+  b.addEventListener('click', ()=> switchTab(b.dataset.tab));
+});
+
+(async function init(){
+  await loadProgram();
+  await renderAll();
+})();
+</script>
+</body>
+</html>
